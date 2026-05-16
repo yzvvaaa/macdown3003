@@ -13,7 +13,7 @@ target "MacDown" do
   pod 'handlebars-objc', '~> 1.4'
   pod 'hoedown', '~> 3.0.7', :inhibit_warnings => false
   pod 'JJPluralForm', '~> 2.1'
-  pod 'LibYAML', '~> 0.1'
+  pod 'LibYAML', '~> 0.1', :source => 'https://github.com/MacDownApp/cocoapods-specs.git'
   pod 'M13OrderedDictionary', '~> 1.1'
   pod 'MASPreferences', '~> 1.4'
   # Temporarily disabled - will upgrade to 2.8.1 later
@@ -28,7 +28,7 @@ target "MacDownTests" do
 end
 
 target "macdown-cmd" do
-  pod 'GBCli', '~> 1.1'
+  pod 'GBCli', '= 1.1'
 end
 
 # Quick Look extension and shared framework for Issue #284
