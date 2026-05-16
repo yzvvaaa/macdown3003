@@ -1228,6 +1228,7 @@
 			files = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/Dependency/prism/components.js",
 			);
 			name = "Fetch Prism Resources";
 			outputPaths = (
@@ -1235,7 +1236,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SOURCE=\"$PWD/Dependency/prism\"\nTARGET=\"$PWD/MacDown/Resources/Prism\"\nrm -rf \"$TARGET\"\nmkdir -p \"$TARGET\"\ncp -r \"$SOURCE/components\" \"$TARGET\"\ncp -r \"$SOURCE/themes\" \"$TARGET\"\ncp -r \"$SOURCE/plugins\" \"$TARGET\"\ncp -r \"$SOURCE/components.js\" \"$TARGET\"\n";
+			shellScript = "SOURCE=\"$SRCROOT/Dependency/prism\"\nTARGET=\"$SRCROOT/MacDown/Resources/Prism\"\nrm -rf \"$TARGET\"\nmkdir -p \"$TARGET\"\ncp -r \"$SOURCE/components\" \"$TARGET\"\ncp -r \"$SOURCE/themes\" \"$TARGET\"\ncp -r \"$SOURCE/plugins\" \"$TARGET\"\ncp -r \"$SOURCE/components.js\" \"$TARGET\"\n";
 			showEnvVarsInLog = 0;
 		};
 		655CCD821E310F9767572216 /* [CP] Check Pods Manifest.lock */ = {
@@ -1298,6 +1299,7 @@
 			files = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/Tools/GitHub-style-generator/index.sass",
 			);
 			name = "Transpile Styles";
 			outputPaths = (
@@ -1305,7 +1307,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "make -C \"$PROJECT_DIR/Tools/GitHub-style-generator/\"\n";
+			shellScript = "if [ ! -x \"$PROJECT_DIR/Tools/GitHub-style-generator/node_modules/.bin/sass\" ]; then\n  echo \"warning: sass not installed; skipping style compilation. Run npm install in Tools/GitHub-style-generator/ to rebuild.\"\n  exit 0\nfi\nmake -C \"$PROJECT_DIR/Tools/GitHub-style-generator/\"\n";
 			showEnvVarsInLog = 0;
 		};
 
