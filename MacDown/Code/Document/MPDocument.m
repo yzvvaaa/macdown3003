@@ -1283,6 +1283,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
                 CGFloat scrollBefore = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
 
+                // Block previewBoundsDidChange from calling syncScrollersReverse during
+                // DOM replacement. body.innerHTML transiently resets scroll to 0 before
+                // window.scrollTo restores it; without this guard that 0 propagates to the
+                // editor via reverse sync, producing the "jump to top" jiggle on large docs
+                // where the render finishes after the 0.2s _inEditing window expires.
+                self.shouldHandlePreviewBoundsChange = NO;
+
                 // Only replace body content, preserving head (CSS, scripts)
                 JSContext *context = self.preview.mainFrame.javaScriptContext;
                 context[@"window"][@"__macdownTempHtml"] = bodyContent;
@@ -1326,6 +1333,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                         CGFloat newScrollY = NSMinY(
                             weakSelf.preview.enclosingScrollView.contentView.bounds);
                         weakSelf.lastPreviewScrollTop = newScrollY;
+                        // Re-enable after MathJax has restored the scroll position.
+                        weakSelf.shouldHandlePreviewBoundsChange = YES;
                     } forKey:@"DOMReplacementDone"];
                     [self.preview.windowScriptObject setValue:listener
                                                       forKey:@"MathJaxListener"];
@@ -1338,6 +1347,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                 if (!self.preferences.htmlMathJax)
                 {
                     self.lastPreviewScrollTop = scrollBefore;
+                    // Re-enable on the next run loop iteration so any scroll notifications
+                    // that WebKit queued synchronously during evaluateScript are suppressed
+                    // before we start listening again.
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        self.shouldHandlePreviewBoundsChange = YES;
+                    });
                 }
 
                 // Mark rendering as complete so next edit will be processed
@@ -1490,10 +1505,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     {
         @synchronized(self) {
             self.shouldHandlePreviewBoundsChange = NO;
-            if (!_inLiveScroll) {
+            if (!_inLiveScroll && !_inEditing) {
                 [self updateHeaderLocations];
+                [self syncScrollersReverse];
             }
-            [self syncScrollersReverse];
             self.shouldHandlePreviewBoundsChange = YES;
         }
     }
