@@ -1301,17 +1301,22 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     @"  delete window.__macdownTempHtml;"
                     @"  var body = document.body;"
                     @"  body.innerHTML = html;"
+                    // Restore scroll immediately after innerHTML, before Prism.
+                    // Prism.highlightAll() is synchronous and can block the main
+                    // thread for seconds on large documents; if scrollTo ran after
+                    // it, the preview would sit at position 0 for that entire time.
+                    @"  window.scrollTo(0,scrollY);"
                     @"  if(window.Prism){Prism.highlightAll();}"
                     @"  if(window.MathJax&&MathJax.Hub){"
                     @"    MathJax.Hub.Queue(['Typeset',MathJax.Hub]);"
                     @"    MathJax.Hub.Queue(function(){"
+                    // Re-restore after MathJax finishes, since typesetting changes
+                    // document height and may shift the effective scroll position.
                     @"      window.scrollTo(0,scrollY);"
                     @"      if(typeof MathJaxListener!=='undefined'){"
                     @"        MathJaxListener.invokeCallbackForKey_('DOMReplacementDone');"
                     @"      }"
                     @"    });"
-                    @"  } else {"
-                    @"    window.scrollTo(0,scrollY);"
                     @"  }"
                     @"})();",
                     scrollBefore];
@@ -1346,9 +1351,19 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                 // MathJax case is handled in the completion callback above.
                 if (!self.preferences.htmlMathJax)
                 {
+                    // Belt-and-suspenders Cocoa scroll restoration: set the clip
+                    // view position directly, before any layout notifications reach
+                    // the run loop. This corrects any scroll drift that WebKit
+                    // applied during DOM replacement even after window.scrollTo ran.
+                    NSClipView *clipView =
+                        self.preview.enclosingScrollView.contentView;
+                    [clipView scrollToPoint:NSMakePoint(0, scrollBefore)];
+                    [self.preview.enclosingScrollView
+                        reflectScrolledClipView:clipView];
+
                     self.lastPreviewScrollTop = scrollBefore;
-                    // Re-enable on the next run loop iteration so any scroll notifications
-                    // that WebKit queued synchronously during evaluateScript are suppressed
+                    // Re-enable on the next run loop iteration so any scroll
+                    // notifications queued during evaluateScript are suppressed
                     // before we start listening again.
                     dispatch_async(dispatch_get_main_queue(), ^{
                         self.shouldHandlePreviewBoundsChange = YES;
