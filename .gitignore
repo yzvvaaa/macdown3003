@@ -180,7 +180,6 @@ Pods/
 Tools/__pycache__/
 Dependency/version/version.h
 Dependency/peg-markdown-highlight/pmh_parser_core.c
-Dependency/peg-markdown-highlight/pmh_parser.c
 Dependency/peg-markdown-highlight/*.o
 Dependency/peg-markdown-highlight/greg/*.o
 Dependency/peg-markdown-highlight/greg/*.o-*
